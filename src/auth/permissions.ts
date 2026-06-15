@@ -1,4 +1,5 @@
-import { type UserRole, userRoles } from '@/types/api';
+import type { Role } from '@/api/types';
+import { roles } from '@/lib/constants';
 
 export type AppRouteId =
   | 'dashboard'
@@ -12,24 +13,24 @@ export type AppRouteId =
   | 'mySummary'
   | 'changePassword';
 
-export const routePermissions: Record<AppRouteId, UserRole[]> = {
-  dashboard: [userRoles.superAdmin, userRoles.manager],
-  batches: [userRoles.superAdmin, userRoles.manager],
-  customers: [userRoles.superAdmin, userRoles.manager],
-  users: [userRoles.superAdmin, userRoles.manager],
-  assignmentLogs: [userRoles.superAdmin, userRoles.manager],
-  callLogs: [userRoles.superAdmin, userRoles.manager],
-  myCustomers: [userRoles.manager, userRoles.employee],
-  myCustomersHistory: [userRoles.manager, userRoles.employee],
-  mySummary: [userRoles.manager, userRoles.employee],
-  changePassword: [userRoles.superAdmin, userRoles.manager, userRoles.employee],
+export const routePermissions: Record<AppRouteId, Role[]> = {
+  dashboard: [roles.superAdmin, roles.manager],
+  batches: [roles.superAdmin, roles.manager],
+  customers: [roles.superAdmin, roles.manager],
+  users: [roles.superAdmin, roles.manager],
+  assignmentLogs: [roles.superAdmin, roles.manager],
+  callLogs: [roles.superAdmin, roles.manager],
+  myCustomers: [roles.manager, roles.employee],
+  myCustomersHistory: [roles.manager, roles.employee],
+  mySummary: [roles.manager, roles.employee],
+  changePassword: [roles.superAdmin, roles.manager, roles.employee],
 };
 
-export const canAccessRoute = (role: UserRole, routeId: AppRouteId) =>
+export const canAccessRoute = (role: Role, routeId: AppRouteId) =>
   routePermissions[routeId].includes(role);
 
-export const getDefaultPathByRole = (role: UserRole) => {
-  if (role === userRoles.employee) {
+export const getDefaultPathByRole = (role: Role) => {
+  if (role === roles.employee) {
     return '/my-customers';
   }
 

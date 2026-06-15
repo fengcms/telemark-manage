@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "biome lint ./src",
+    "typecheck": "tsc -b",
     "format": "biome format --write ./src",
     "check": "biome check ./src",
     "preview": "vite preview"

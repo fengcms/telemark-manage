@@ -1,9 +1,12 @@
+import { routePermissions } from '@/auth/permissions';
+import { ProtectedRoute, RootRedirect } from '@/components/auth/ProtectedRoute';
 import { AppLayout } from '@/layouts/app-layout';
+import { LoginPage } from '@/pages/Login';
+import { ChangePasswordPage } from '@/pages/change-password';
+import { DashboardPage } from '@/pages/dashboard';
 import { ForbiddenPage } from '@/pages/forbidden';
-import { LoginPage } from '@/pages/login';
 import { NotFoundPage } from '@/pages/not-found';
 import { PlaceholderPage } from '@/pages/placeholder-page';
-import { ProtectedRoute, RootRedirect } from '@/routes/protected-route';
 import { appRoutes } from '@/routes/routes';
 import { RouterProvider, createBrowserRouter } from 'react-router';
 
@@ -37,18 +40,28 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      ...appRoutes.map(route => ({
-        path: route.path.slice(1),
-        element: (
-          <ProtectedRoute routeId={route.id}>
+      ...appRoutes.map(route => {
+        const element =
+          route.id === 'changePassword' ? (
+            <ChangePasswordPage key={route.id} />
+          ) : route.id === 'dashboard' ? (
+            <DashboardPage key={route.id} />
+          ) : (
             <PlaceholderPage
+              key={route.id}
               description={pageDescriptions[route.id]}
               icon={route.icon}
               title={route.label}
             />
-          </ProtectedRoute>
-        ),
-      })),
+          );
+
+        return {
+          path: route.path.slice(1),
+          element: (
+            <ProtectedRoute allowedRoles={routePermissions[route.id]}>{element}</ProtectedRoute>
+          ),
+        };
+      }),
       {
         path: '403',
         element: <ForbiddenPage />,

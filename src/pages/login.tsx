@@ -1,4 +1,4 @@
-import { getApiErrorMessage } from '@/api/http';
+import { getApiErrorMessage } from '@/api/client';
 import { useAuth } from '@/auth/auth-context';
 import { getDefaultPathByRole } from '@/auth/permissions';
 import { useTheme } from '@/components/theme/theme-provider';
@@ -13,8 +13,8 @@ import { Navigate, useNavigate } from 'react-router';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { accessToken, user, login } = useAuth();
+  const { resolvedTheme, theme, toggleTheme } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -26,7 +26,7 @@ export const LoginPage = () => {
     },
   });
 
-  if (user) {
+  if (accessToken && user) {
     return <Navigate replace to={getDefaultPathByRole(user.role)} />;
   }
 
@@ -35,7 +35,7 @@ export const LoginPage = () => {
     mutation.mutate();
   };
 
-  const ThemeIcon = theme === 'dark' ? Sun : Moon;
+  const ThemeIcon = resolvedTheme === 'dark' ? Sun : Moon;
 
   return (
     <div className="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-[1fr_480px]">

@@ -1,26 +1,12 @@
-import type { UserRole } from './api';
+import type { LoginResponse, RefreshResponse, User } from '@/api/types';
 
-export type CurrentUser = {
-  id?: number | string;
-  username?: string;
-  name?: string;
-  role: UserRole;
-};
+export type CurrentUser = User;
 
-export type AuthSession = {
-  accessToken: string;
-  refreshToken: string;
-  user: CurrentUser;
-};
+export type AuthSession = LoginResponse;
 
 export type LoginPayload = {
   username: string;
   password: string;
 };
 
-export type LoginResponse = AuthSession;
-
-export type RefreshResponse = {
-  accessToken: string;
-  refreshToken?: string;
-};
+export type { LoginResponse, RefreshResponse };

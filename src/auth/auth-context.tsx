@@ -1,4 +1,10 @@
-import { loginRequest } from '@/api/auth';
+import { loginRequest, logoutRequest } from '@/api/auth';
+import {
+  clearStoredSession,
+  getRefreshToken,
+  getStoredSession,
+  setStoredSession,
+} from '@/lib/auth-storage';
 import { sha256 } from '@/lib/crypto';
 import type { AuthSession, CurrentUser } from '@/types/auth';
 import {
@@ -9,13 +15,13 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { clearStoredSession, getStoredSession, setStoredSession } from './session';
 
 type AuthContextValue = {
   user: CurrentUser | null;
   accessToken: string | null;
   login: (username: string, password: string) => Promise<AuthSession>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  clearSession: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,10 +39,23 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     return nextSession;
   }, []);
 
-  const logout = useCallback(() => {
+  const clearSession = useCallback(() => {
     clearStoredSession();
     setSession(null);
   }, []);
+
+  const logout = useCallback(async () => {
+    const refreshToken = getRefreshToken();
+
+    try {
+      if (refreshToken) {
+        await logoutRequest(refreshToken);
+      }
+    } finally {
+      clearSession();
+      window.location.assign('/login');
+    }
+  }, [clearSession]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -44,8 +63,9 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       accessToken: session?.accessToken ?? null,
       login,
       logout,
+      clearSession,
     }),
-    [login, logout, session],
+    [clearSession, login, logout, session],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
