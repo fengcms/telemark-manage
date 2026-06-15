@@ -9,6 +9,9 @@ import { ChangePasswordPage } from '@/pages/change-password';
 import { CustomersPage } from '@/pages/customers';
 import { DashboardPage } from '@/pages/dashboard';
 import { ForbiddenPage } from '@/pages/forbidden';
+import { MyCustomersPage } from '@/pages/my-customers';
+import { MyCustomersHistoryPage } from '@/pages/my-customers-history';
+import { MySummaryPage } from '@/pages/my-summary';
 import { NotFoundPage } from '@/pages/not-found';
 import { PlaceholderPage } from '@/pages/placeholder-page';
 import { UsersPage } from '@/pages/users';
@@ -61,6 +64,12 @@ const router = createBrowserRouter([
             <AssignmentLogsPage key={route.id} />
           ) : route.id === 'callLogs' ? (
             <CallLogsPage key={route.id} />
+          ) : route.id === 'myCustomers' ? (
+            <MyCustomersPage key={route.id} />
+          ) : route.id === 'myCustomersHistory' ? (
+            <MyCustomersHistoryPage key={route.id} />
+          ) : route.id === 'mySummary' ? (
+            <MySummaryPage key={route.id} />
           ) : (
             <PlaceholderPage
               key={route.id}
