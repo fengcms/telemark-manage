@@ -2,13 +2,16 @@ import { routePermissions } from '@/auth/permissions';
 import { ProtectedRoute, RootRedirect } from '@/components/auth/ProtectedRoute';
 import { AppLayout } from '@/layouts/app-layout';
 import { LoginPage } from '@/pages/Login';
+import { AssignmentLogsPage } from '@/pages/assignment-logs';
 import { BatchesPage } from '@/pages/batches';
+import { CallLogsPage } from '@/pages/call-logs';
 import { ChangePasswordPage } from '@/pages/change-password';
 import { CustomersPage } from '@/pages/customers';
 import { DashboardPage } from '@/pages/dashboard';
 import { ForbiddenPage } from '@/pages/forbidden';
 import { NotFoundPage } from '@/pages/not-found';
 import { PlaceholderPage } from '@/pages/placeholder-page';
+import { UsersPage } from '@/pages/users';
 import { appRoutes } from '@/routes/routes';
 import { RouterProvider, createBrowserRouter } from 'react-router';
 
@@ -52,6 +55,12 @@ const router = createBrowserRouter([
             <BatchesPage key={route.id} />
           ) : route.id === 'customers' ? (
             <CustomersPage key={route.id} />
+          ) : route.id === 'users' ? (
+            <UsersPage key={route.id} />
+          ) : route.id === 'assignmentLogs' ? (
+            <AssignmentLogsPage key={route.id} />
+          ) : route.id === 'callLogs' ? (
+            <CallLogsPage key={route.id} />
           ) : (
             <PlaceholderPage
               key={route.id}
