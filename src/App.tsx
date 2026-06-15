@@ -2,7 +2,9 @@ import { routePermissions } from '@/auth/permissions';
 import { ProtectedRoute, RootRedirect } from '@/components/auth/ProtectedRoute';
 import { AppLayout } from '@/layouts/app-layout';
 import { LoginPage } from '@/pages/Login';
+import { BatchesPage } from '@/pages/batches';
 import { ChangePasswordPage } from '@/pages/change-password';
+import { CustomersPage } from '@/pages/customers';
 import { DashboardPage } from '@/pages/dashboard';
 import { ForbiddenPage } from '@/pages/forbidden';
 import { NotFoundPage } from '@/pages/not-found';
@@ -46,6 +48,10 @@ const router = createBrowserRouter([
             <ChangePasswordPage key={route.id} />
           ) : route.id === 'dashboard' ? (
             <DashboardPage key={route.id} />
+          ) : route.id === 'batches' ? (
+            <BatchesPage key={route.id} />
+          ) : route.id === 'customers' ? (
+            <CustomersPage key={route.id} />
           ) : (
             <PlaceholderPage
               key={route.id}
