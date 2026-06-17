@@ -1,7 +1,6 @@
 import { routePermissions } from '@/auth/permissions';
 import { ProtectedRoute, RootRedirect } from '@/components/auth/ProtectedRoute';
 import { AppLayout } from '@/layouts/app-layout';
-import { LoginPage } from '@/pages/Login';
 import { AssignmentLogsPage } from '@/pages/assignment-logs';
 import { BatchesPage } from '@/pages/batches';
 import { CallLogsPage } from '@/pages/call-logs';
@@ -9,6 +8,7 @@ import { ChangePasswordPage } from '@/pages/change-password';
 import { CustomersPage } from '@/pages/customers';
 import { DashboardPage } from '@/pages/dashboard';
 import { ForbiddenPage } from '@/pages/forbidden';
+import { LoginPage } from '@/pages/login-page';
 import { MyCustomersPage } from '@/pages/my-customers';
 import { MyCustomersHistoryPage } from '@/pages/my-customers-history';
 import { MySummaryPage } from '@/pages/my-summary';
