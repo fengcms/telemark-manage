@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { employeeOptionsQueryKey } from '@/hooks/use-employee-options';
 import { roleLabels, roles } from '@/lib/constants';
 import { sha256 } from '@/lib/crypto';
+import { clearEmployeeOptionsCache } from '@/lib/employee-options-cache';
 import { formatDateTime, formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -98,6 +100,8 @@ export const UsersPage = () => {
   }, [selectedUser]);
 
   const invalidateUsers = () => {
+    clearEmployeeOptionsCache();
+    queryClient.removeQueries({ queryKey: employeeOptionsQueryKey });
     void queryClient.invalidateQueries({ queryKey: ['users'] });
   };
 

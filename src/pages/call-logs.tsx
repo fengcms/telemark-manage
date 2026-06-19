@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useEmployeeOptions } from '@/hooks/use-employee-options';
 import { customerStatusLabels } from '@/lib/constants';
 import { formatDateTime, formatDurationSeconds, formatNumber } from '@/lib/format';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +20,7 @@ const statusOptions: CustomerStatus[] = [0, 1, 2, 3, 4];
 
 type Filters = {
   userId: string;
-  customerId: string;
+  phoneLike: string;
   callResult: string;
   startDate: string;
   endDate: string;
@@ -27,7 +28,7 @@ type Filters = {
 
 const emptyFilters: Filters = {
   userId: '',
-  customerId: '',
+  phoneLike: '',
   callResult: '',
   startDate: '',
   endDate: '',
@@ -37,6 +38,7 @@ export const CallLogsPage = () => {
   const [page, setPage] = useState(0);
   const [draftFilters, setDraftFilters] = useState<Filters>(emptyFilters);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const employeeOptionsQuery = useEmployeeOptions();
 
   const callLogsQuery = useQuery({
     queryKey: ['call-logs', page, filters],
@@ -46,7 +48,7 @@ export const CallLogsPage = () => {
         pagesize: pageSize,
         sort: '-id',
         userId: filters.userId ? Number(filters.userId) : undefined,
-        customerId: filters.customerId ? Number(filters.customerId) : undefined,
+        'phone-like': filters.phoneLike || undefined,
         callResult: filters.callResult ? (Number(filters.callResult) as CustomerStatus) : undefined,
         startDate: filters.startDate || undefined,
         endDate: filters.endDate || undefined,
@@ -87,21 +89,33 @@ export const CallLogsPage = () => {
             onSubmit={onSubmit}
           >
             <div className="space-y-2">
-              <Label htmlFor="userId">员工 ID</Label>
-              <Input
+              <Label htmlFor="userId">员工</Label>
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                disabled={employeeOptionsQuery.isLoading}
                 id="userId"
-                inputMode="numeric"
                 value={draftFilters.userId}
                 onChange={event => updateDraft('userId', event.target.value)}
-              />
+              >
+                <option value="">
+                  {employeeOptionsQuery.isLoading ? '正在加载员工...' : '全部员工'}
+                </option>
+                {(employeeOptionsQuery.data ?? []).map(employee => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.realName || employee.username}（{employee.username}）
+                    {employee.status === 0 ? ' · 已禁用' : ''}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="customerId">客户 ID</Label>
+              <Label htmlFor="phoneLike">客户手机号</Label>
               <Input
-                id="customerId"
-                inputMode="numeric"
-                value={draftFilters.customerId}
-                onChange={event => updateDraft('customerId', event.target.value)}
+                id="phoneLike"
+                inputMode="tel"
+                placeholder="支持部分号码"
+                value={draftFilters.phoneLike}
+                onChange={event => updateDraft('phoneLike', event.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -156,6 +170,21 @@ export const CallLogsPage = () => {
               </Button>
             </div>
           </form>
+
+          {employeeOptionsQuery.isError ? (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm">
+              <span className="text-destructive">
+                员工选项加载失败：{getApiErrorMessage(employeeOptionsQuery.error)}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void employeeOptionsQuery.refetch()}
+              >
+                重试
+              </Button>
+            </div>
+          ) : null}
 
           {callLogsQuery.isLoading ? (
             <LoadingPage className="min-h-[320px]" text="正在加载通话日志" />

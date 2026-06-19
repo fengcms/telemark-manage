@@ -14,6 +14,7 @@ export type CallLogListParams = {
   sort?: string;
   userId?: number;
   customerId?: number;
+  'phone-like'?: string;
   callResult?: CustomerStatus;
   startDate?: string;
   endDate?: string;

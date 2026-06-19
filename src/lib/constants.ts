@@ -45,3 +45,14 @@ export const paginationDefaults = {
 } as const;
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787';
+
+const configuredEmployeeCacheDays = Number(import.meta.env.VITE_EMPLOYEE_CACHE_TTL_DAYS ?? 30);
+
+export const employeeOptionsCacheTtlMs =
+  (Number.isFinite(configuredEmployeeCacheDays) && configuredEmployeeCacheDays > 0
+    ? configuredEmployeeCacheDays
+    : 30) *
+  24 *
+  60 *
+  60 *
+  1000;
