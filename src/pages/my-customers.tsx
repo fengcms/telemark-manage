@@ -1,3 +1,4 @@
+import { getActiveCallRemarks } from '@/api/call-remarks';
 import { reportCall } from '@/api/calls';
 import { getApiErrorMessage } from '@/api/client';
 import { getMyCustomers } from '@/api/customers';
@@ -66,6 +67,11 @@ export const MyCustomersPage = () => {
         'phone-like': filters.phoneLike || undefined,
         'company-like': filters.companyLike || undefined,
       }),
+  });
+
+  const commonRemarksQuery = useQuery({
+    queryKey: ['common-call-remarks', 'active'],
+    queryFn: getActiveCallRemarks,
   });
 
   const reportMutation = useMutation({
@@ -335,6 +341,21 @@ export const MyCustomersPage = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="callRemark">通话备注</Label>
+                  {commonRemarksQuery.data?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {commonRemarksQuery.data.map(remark => (
+                        <Button
+                          key={remark}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setCallRemark(remark)}
+                        >
+                          {remark}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : null}
                   <textarea
                     className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     id="callRemark"

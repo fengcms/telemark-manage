@@ -8,6 +8,7 @@ export type AppRouteId =
   | 'users'
   | 'assignmentLogs'
   | 'callLogs'
+  | 'commonCallRemarks'
   | 'myCustomers'
   | 'myCustomersHistory'
   | 'mySummary'
@@ -20,6 +21,7 @@ export const routePermissions: Record<AppRouteId, Role[]> = {
   users: [roles.superAdmin, roles.manager],
   assignmentLogs: [roles.superAdmin, roles.manager],
   callLogs: [roles.superAdmin, roles.manager],
+  commonCallRemarks: [roles.superAdmin, roles.manager],
   myCustomers: [roles.manager, roles.employee],
   myCustomersHistory: [roles.manager, roles.employee],
   mySummary: [roles.manager, roles.employee],

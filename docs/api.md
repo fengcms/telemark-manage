@@ -11,7 +11,7 @@
 - RefreshToken 有效期：14 天，存储在 Cloudflare KV 绑定 `c_kv`
 - 角色枚举：`1` 超级管理员，`2` 经理，`3` 普通员工
 - 客户状态枚举：`0` 未拨打，`1` 已接听，`2` 无人接听，`3` 拒接，`4` 空号停机
-- 客户类型枚举：`0` 普通线索，`1` 意向客户
+- 客户类型枚举：`-1` 废线索，`0` 普通线索，`1` 意向客户，`2` 高意向客户
 
 密码规则：前端提交的 `password` 不是明文，而是 `SHA-256(明文密码)`。后端会再执行 `SHA-256(前端密码哈希 + 用户 salt)` 与数据库 `password_hash` 比对。
 
@@ -67,7 +67,7 @@
 curl：
 
 ```bash
-curl -X POST http://localhost:8787/api/auth/init-admin \
+curl -X POST https://telemark-api.bailashu.com/api/auth/init-admin \
   -H 'Content-Type: application/json' \
   -d '{"username":"admin","password":"240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9","realName":"超级管理员","phone":"13800000000","remark":"初始化超级管理员"}'
 ```
@@ -379,6 +379,111 @@ curl：
 ```bash
 curl 'http://localhost:8787/api/dashboard/agent-daily?date=2026-06-13&page=0&pagesize=20&sort=-totalCalls' \
   -H "Authorization: Bearer <adminOrManagerAccessToken>"
+```
+
+### GET /api/dashboard/agent-monthly
+
+员工月度呼叫统计。`role=1` / `role=2` 可查看员工月度列表；`role=3` 普通员工也可调用，但只能读取自己的月度数据。
+
+查询参数：
+
+| 参数 | 必填 | 说明 |
+|------|------|------|
+| `month` | 否 | 统计月份，格式 `YYYY-MM`；不传时使用 `Asia/Shanghai` 当前业务月份 |
+| `page` | 否 | 从 `0` 开始，默认 `0` |
+| `pagesize` | 否 | 默认 `10`，最大 `100`，超过时截断为 `100` |
+| `sort` | 否 | 默认 `-totalCalls`；`sort=totalCalls` 为升序，`sort=-totalCalls` 为降序 |
+| `userId` | 否 | 按员工 ID 精确筛选；`role=3` 传入该参数也会被强制改为当前登录用户 ID |
+| `username-like` | 否 | 按用户名模糊筛选 |
+| `realName-like` | 否 | 按真实姓名模糊筛选 |
+
+排序白名单：
+
+```txt
+userId
+totalCalls
+calledCustomers
+connectedCalls
+connectedCustomers
+totalDuration
+avgDuration
+connectRate
+customerConnectRate
+firstCallTime
+lastCallTime
+```
+
+响应：
+
+```json
+{
+  "month": "2026-06",
+  "page": 0,
+  "pageSize": 20,
+  "total": 1,
+  "list": [
+    {
+      "userId": 3,
+      "username": "sales01",
+      "realName": "销售一号",
+      "role": 3,
+      "totalCalls": 188,
+      "calledCustomers": 120,
+      "connectedCalls": 56,
+      "connectedCustomers": 45,
+      "totalDuration": 3600,
+      "avgDuration": 64.29,
+      "connectRate": 0.2979,
+      "customerConnectRate": 0.375,
+      "firstCallTime": "2026-06-01T01:15:30.000Z",
+      "lastCallTime": "2026-06-17T09:42:18.000Z"
+    }
+  ]
+}
+```
+
+字段说明：
+
+| 字段 | 说明 |
+|------|------|
+| `totalCalls` | 本月总拨打次数，来自 `agent_daily_summaries.total_calls` 月度汇总 |
+| `calledCustomers` | 本月去重拨打客户/号码数，来自 `call_logs.customer_id` 去重统计 |
+| `connectedCalls` | 本月接通次数，来自 `agent_daily_summaries.connected_calls` 月度汇总 |
+| `connectedCustomers` | 本月去重接通客户/号码数，按 `call_logs.call_result = 1` 去重统计 |
+| `connectRate` | 次数口径接通率，`connectedCalls / totalCalls`；无拨打时为 `0` |
+| `customerConnectRate` | 号码口径接通率，`connectedCustomers / calledCustomers`；无拨打号码时为 `0` |
+| `avgDuration` | 平均接通通话时长，`totalDuration / connectedCalls`；无接通时为 `0` |
+
+业务规则：
+
+- 月度次数指标来自 `agent_daily_summaries`，适合快速汇总员工工作量
+- 月度号码数指标来自 `call_logs`，按 `Asia/Shanghai` 月初到下月月初范围统计
+- `role=3` 普通员工只能看到自己的月度数据，不能通过 `userId` 查询他人
+- 默认只返回当月有日报记录的用户
+- 用户已禁用时，历史月度数据仍继续显示
+- 不返回 `password_hash`
+- 不返回 `salt`
+
+错误响应：
+
+| 状态码 | 场景 |
+|--------|------|
+| 400 | `month`、`userId` 或 `sort` 参数不合法 |
+| 401 | 未登录、AccessToken 无效或用户已禁用 |
+| 403 | 角色不在 `1`、`2`、`3` 范围内 |
+
+curl：
+
+```bash
+curl 'http://localhost:8787/api/dashboard/agent-monthly?month=2026-06&page=0&pagesize=20&sort=-totalCalls' \
+  -H "Authorization: Bearer <adminOrManagerAccessToken>"
+```
+
+员工查看自己的月度统计：
+
+```bash
+curl 'http://localhost:8787/api/dashboard/agent-monthly?month=2026-06' \
+  -H "Authorization: Bearer <employeeAccessToken>"
 ```
 
 ## 线索与批次接口
@@ -738,7 +843,7 @@ curl 'http://localhost:8787/api/customers/1' \
 
 - 只允许更新 `name`、`company`、`type`、`status`、`remark`
 - 不允许更新 `phone`、`ownerId`、`batchId`、`createdAt`、`updatedAt`、软删除字段
-- `type` 只能是 `0` 或 `1`
+- `type` 只能是 `-1`、`0`、`1`、`2`
 - `status` 只能是 `0`、`1`、`2`、`3`、`4`
 - `remark` 可为空字符串或 `null`
 - 空请求体或未知字段返回 `400`
@@ -844,7 +949,7 @@ curl -X DELETE http://localhost:8787/api/customers/1 \
 - `customerIds` 必须是非空正整数数组，最多 `500` 个
 - `patch` 只允许 `type`、`status`、`remark`
 - 批量更新不允许修改 `name`、`company`、`phone`、归属、批次和软删除字段
-- `type` 只能是 `0` 或 `1`
+- `type` 只能是 `-1`、`0`、`1`、`2`
 - `status` 只能是 `0`、`1`、`2`、`3`、`4`
 - `remark` 可为空字符串或 `null`
 - 存在不存在的客户或已作废客户时返回 `400`
@@ -932,8 +1037,8 @@ curl 'http://localhost:8787/api/my-customers?page=0&pagesize=10&sort=-id' \
 | `sort` | 否 | 默认 `-updatedAt`；`sort=updatedAt` 升序，`sort=-updatedAt` 降序 |
 | `status` | 否 | 客户状态，支持 `1`、`2`、`3`、`4` |
 | `status-in` | 否 | 客户状态集合，例如 `status-in=1,2` |
-| `type` | 否 | 客户类型，支持 `0`、`1` |
-| `type-in` | 否 | 客户类型集合，例如 `type-in=0,1` |
+| `type` | 否 | 客户类型，支持 `-1`、`0`、`1`、`2` |
+| `type-in` | 否 | 客户类型集合，例如 `type-in=-1,0,1,2` |
 | `name-like` | 否 | 客户名称模糊查询 |
 | `phone-like` | 否 | 手机号模糊查询 |
 | `company-like` | 否 | 公司名称模糊查询 |
@@ -1212,6 +1317,7 @@ curl -X DELETE http://localhost:8787/api/users/3 \
   "duration": 66,
   "callResult": 1,
   "callRemark": "客户已接听，有明确意向",
+  "customerType": 1,
   "clientRequestId": "uuid-from-app",
   "startedAt": "2026-06-13T01:15:30.000Z",
   "endedAt": "2026-06-13T01:16:36.000Z"
@@ -1246,8 +1352,10 @@ curl -X DELETE http://localhost:8787/api/users/3 \
 
 - 插入一条不可变 `call_logs` 通话记录
 - 更新 `customers.status` 为 `callResult`
-- 更新 `customers.remark` 为 `callRemark`
-- 当 `callResult=1` 时，自动将 `customers.type` 改为 `1`
+- 当 `callResult=1` 时，更新 `customers.remark` 为 `callRemark`
+- 当 `callResult!=1` 时，`call_logs.call_remark` 保存为空，且不更新 `customers.remark`
+- 更新 `customers.type` 为请求中的 `customerType`
+- 后端不会因为 `callResult=1` 自动把客户升级为意向客户，线索类型必须由员工手动选择
 - 按 `(user_id, date)` upsert `agent_daily_summaries`
 - 新日报：`first_call_time` 与 `last_call_time` 均为当前时间，`total_calls=1`
 - 已有日报：`last_call_time` 更新为当前时间，`total_calls` 自增
@@ -1269,6 +1377,9 @@ curl -X DELETE http://localhost:8787/api/users/3 \
 
 校验规则：
 
+- 当 `callResult=1`（已接听）时，`callRemark` 必填，且去除首尾空格后不能为空
+- 当 `callResult!=1` 时，`callRemark` 不需要传；即使传入，后端也会忽略并保存为空
+- `customerType` 必填，只能是 `-1`、`0`、`1`、`2`
 - `clientRequestId` 如传入，必须是非空字符串，最长 `128`
 - `startedAt` / `endedAt` 如传入，必须是合法 ISO 字符串
 - `endedAt` 不能早于 `startedAt`
@@ -1277,11 +1388,22 @@ curl -X DELETE http://localhost:8787/api/users/3 \
 
 curl：
 
+已接听，必须传 `callRemark`：
+
 ```bash
 curl -X POST http://localhost:8787/api/calls/report \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer <accessToken>" \
-  -d '{"customerId":1,"duration":66,"callResult":1,"callRemark":"客户已接听，有明确意向","clientRequestId":"uuid-from-app","startedAt":"2026-06-13T01:15:30.000Z","endedAt":"2026-06-13T01:16:36.000Z"}'
+  -d '{"customerId":1,"duration":66,"callResult":1,"callRemark":"客户已接听，有明确意向","customerType":1,"clientRequestId":"uuid-from-app","startedAt":"2026-06-13T01:15:30.000Z","endedAt":"2026-06-13T01:16:36.000Z"}'
+```
+
+非已接听，不需要传 `callRemark`：
+
+```bash
+curl -X POST http://localhost:8787/api/calls/report \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer <accessToken>" \
+  -d '{"customerId":1,"duration":0,"callResult":2,"customerType":0,"clientRequestId":"uuid-from-app-no-answer","startedAt":"2026-06-13T01:15:30.000Z","endedAt":"2026-06-13T01:15:30.000Z"}'
 ```
 
 重复提交同一个 `clientRequestId`：
@@ -1290,7 +1412,7 @@ curl -X POST http://localhost:8787/api/calls/report \
 curl -X POST http://localhost:8787/api/calls/report \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer <accessToken>" \
-  -d '{"customerId":1,"duration":66,"callResult":1,"callRemark":"重复提交测试","clientRequestId":"uuid-from-app","startedAt":"2026-06-13T01:15:30.000Z","endedAt":"2026-06-13T01:16:36.000Z"}'
+  -d '{"customerId":1,"duration":66,"callResult":1,"callRemark":"重复提交测试","customerType":1,"clientRequestId":"uuid-from-app","startedAt":"2026-06-13T01:15:30.000Z","endedAt":"2026-06-13T01:16:36.000Z"}'
 ```
 
 ### GET /api/my-summary
@@ -1507,6 +1629,113 @@ curl：
 
 ```bash
 curl 'http://localhost:8787/api/call-logs?page=0&pagesize=20&sort=-id&userId=3&callResult=1&startDate=2026-06-01&endDate=2026-06-13' \
+  -H "Authorization: Bearer <adminOrManagerAccessToken>"
+```
+
+## 常用反馈备注接口
+
+### GET /api/call-remarks/common
+
+获取 APP 通话反馈弹窗的常用备注。仅 `role=2` 或 `role=3` 可调用。
+
+响应为字符串数组：
+
+```json
+[
+  "客户已接听，有明确意向",
+  "客户有意向，稍后回访",
+  "无人接听，稍后再拨"
+]
+```
+
+业务规则：
+
+- 只返回 `status=1` 的备注
+- 按 `sortOrder ASC, id ASC` 排序
+- 返回数组本身，不包裹 `list`
+
+curl：
+
+```bash
+curl 'http://localhost:8787/api/call-remarks/common' \
+  -H "Authorization: Bearer <employeeOrManagerAccessToken>"
+```
+
+### GET /api/common-call-remarks
+
+管理端查询常用备注配置。仅 `role=1` 或 `role=2` 可调用。
+
+支持通用查询器参数：
+
+```txt
+page
+pagesize
+sort
+content-like
+status
+sortOrder
+usageCount
+```
+
+响应：
+
+```json
+{
+  "page": 0,
+  "pageSize": 10,
+  "total": 1,
+  "list": [
+    {
+      "id": 1,
+      "content": "客户已接听，有明确意向",
+      "sortOrder": 10,
+      "status": 1,
+      "usageCount": 0,
+      "createdBy": null,
+      "updatedBy": null,
+      "createdAt": "2026-06-16T00:00:00.000Z",
+      "updatedAt": "2026-06-16T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### POST /api/common-call-remarks
+
+新增常用备注。仅 `role=1` 或 `role=2` 可调用。
+
+请求：
+
+```json
+{
+  "content": "客户需要先看装修案例",
+  "sortOrder": 30,
+  "status": 1
+}
+```
+
+### PATCH /api/common-call-remarks/:id
+
+更新常用备注。仅 `role=1` 或 `role=2` 可调用。字段均可选。
+
+请求：
+
+```json
+{
+  "content": "客户需要先看案例",
+  "sortOrder": 35,
+  "status": 1
+}
+```
+
+### DELETE /api/common-call-remarks/:id
+
+软删除常用备注。仅 `role=1` 或 `role=2` 可调用。实际行为是将 `status` 更新为 `0`。
+
+curl：
+
+```bash
+curl -X DELETE http://localhost:8787/api/common-call-remarks/1 \
   -H "Authorization: Bearer <adminOrManagerAccessToken>"
 ```
 

@@ -5,6 +5,7 @@ import { AssignmentLogsPage } from '@/pages/assignment-logs';
 import { BatchesPage } from '@/pages/batches';
 import { CallLogsPage } from '@/pages/call-logs';
 import { ChangePasswordPage } from '@/pages/change-password';
+import { CommonCallRemarksPage } from '@/pages/common-call-remarks';
 import { CustomersPage } from '@/pages/customers';
 import { DashboardPage } from '@/pages/dashboard';
 import { ForbiddenPage } from '@/pages/forbidden';
@@ -25,6 +26,7 @@ const pageDescriptions = {
   users: '查看员工列表；经理角色仅保留只读入口。',
   assignmentLogs: '追踪客户分配记录。',
   callLogs: '查看通话和跟进记录。',
+  commonCallRemarks: '管理员工通话反馈时使用的快捷备注。',
   myCustomers: '员工处理自己分配到的客户。',
   myCustomersHistory: '查看个人历史跟进记录。',
   mySummary: '查看个人工作统计。',
@@ -64,6 +66,8 @@ const router = createBrowserRouter([
             <AssignmentLogsPage key={route.id} />
           ) : route.id === 'callLogs' ? (
             <CallLogsPage key={route.id} />
+          ) : route.id === 'commonCallRemarks' ? (
+            <CommonCallRemarksPage key={route.id} />
           ) : route.id === 'myCustomers' ? (
             <MyCustomersPage key={route.id} />
           ) : route.id === 'myCustomersHistory' ? (

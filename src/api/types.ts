@@ -262,3 +262,33 @@ export type ReportCallResponse = {
   date: string;
   idempotent: boolean;
 };
+
+export type CommonCallRemark = {
+  id: number;
+  content: string;
+  sortOrder: number;
+  status: number;
+  usageCount: number;
+  createdBy: number | null;
+  updatedBy: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CommonCallRemarkListParams = {
+  page?: number;
+  pagesize?: number;
+  sort?: string;
+  'content-like'?: string;
+  status?: number;
+  sortOrder?: number;
+  usageCount?: number;
+};
+
+export type CreateCommonCallRemarkPayload = {
+  content: string;
+  sortOrder: number;
+  status: number;
+};
+
+export type UpdateCommonCallRemarkPayload = Partial<CreateCommonCallRemarkPayload>;
