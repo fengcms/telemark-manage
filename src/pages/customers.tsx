@@ -25,7 +25,7 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 
 type CustomerTab = 'public' | 'assigned' | 'all';
 
-const pageSize = 10;
+const pageSize = 50;
 
 const tabs: Array<{ value: CustomerTab; label: string }> = [
   { value: 'public', label: '公海' },
